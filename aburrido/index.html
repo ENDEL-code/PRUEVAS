@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL FLIPANTE JUEGO DE COJONES DE DIBUJAR CON TUS FLIPANTES AMIGOS</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            background-image: linear-gradient(to bottom, #ffefd5, #ffe4b5);
+        }
+        h1 {
+            color: #ff4500;
+            margin-top: 20px;
+            text-shadow: 3px 3px #ffa07a;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #ff4500;
+            color: white;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        button:hover {
+            transform: scale(1.1);
+            background-color: #ffa07a;
+        }
+        #menu, #game-container, #invitation-popup, #room-menu, #drawing-tools, #countdown-display, #end-round-buttons {
+            display: none;
+        }
+        #menu {
+            margin-top: 20px;
+        }
+        #game-container {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #room-code {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff4500;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        #room-menu {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            background: #ffa07a;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        #room-menu button {
+            display: block;
+            margin: 10px 0;
+        }
+        #drawing-tools {
+            margin-top: 20px;
+        }
+        #drawing-tools button {
+            margin: 5px;
+        }
+        #countdown-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff4500;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #chat-box {
+            display: none; /* El chat está oculto por defecto */
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            height: 250px;
+            background: white;
+            border: 2px solid #ff4500;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 2px solid #ff4500;
+        }
+        #chat-input {
+            display: flex;
+            padding: 5px;
+        }
+        #chat-input input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #chat-input button {
+            margin-left: 5px;
+        }
+        #end-round-buttons {
+            display: none;
+            margin-top: 20px;
+        }
+        #end-round-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #ff4500;
+            color: white;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        #end-round-buttons button:hover {
+            transform: scale(1.1);
+            background-color: #ffa07a;
+        }
+    </style>
+</head>
+<body>
+    <h1>EL FLIPANTE JUEGO DE COJONES DE DIBUJAR CON TUS FLIPANTES AMIGOS</h1>
+    <div id="menu">
+        <button id="create-room">Hacer sala</button>
+        <button id="join-room">Unirse</button>
+    </div>
+    <div id="player-form">
+        <label for="player-name">Ingresa tu nombre:</label>
+        <input type="text" id="player-name" placeholder="Tu nombre">
+        <button id="join-game">Continuar</button>
+        <p class="error" id="error-message"></p>
+    </div>
+    <div id="game-container">
+        <div id="room-code"></div>
+        <canvas id="drawing-canvas" width="800" height="600" style="border:1px solid #000;"></canvas>
+        <p>Jugadores en la sala:</p>
+        <ul id="player-list"></ul>
+        <button id="send-request">Mandar solicitud</button>
+    </div>
+    <div id="room-menu">
+        <button id="invite-friends">Invitar amigos</button>
+        <button id="start-game">Iniciar</button>
+    </div>
+    <div id="drawing-tools">
+        <button id="brush-tool">Pincel</button>
+        <button id="eraser-tool">Borrador</button>
+        <input type="color" id="color-picker" value="#000000">
+        <label for="brush-size">Tamaño:</label>
+        <input type="range" id="brush-size" min="1" max="10" value="5">
+    </div>
+    <div id="countdown-display"></div>
+    <div id="chat-box">
+        <div id="chat-messages"></div>
+        <div id="chat-input">
+            <input type="text" id="chat-message" placeholder="Escribe un mensaje...">
+            <button id="send-chat">Enviar</button>
+        </div>
+    </div>
+    <div id="end-round-buttons">
+        <button id="continue-game">Seguir</button>
+        <button id="exit-game">Salir</button>
+    </div>
+    <div id="invitation-popup" class="popup">
+        <p id="invitation-message"></p>
+        <button id="accept-invitation">Unirse</button>
+        <button id="reject-invitation">Rechazar</button>
+    </div>
+    <script>
+        const players = new Set();
+        const maxPlayers = 5;
+        const words = ["manzana", "coche", "avión", "bicicleta", "guitarra", "perro", "gato", "árbol", "flor", "casa"];
+        let roomCode = null;
+        let playerName = null;
+        let isHost = false;
+        let socket;
+        let reconnectInterval = 2000; // Tiempo de espera para intentar reconectar (en milisegundos)
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5; // Número máximo de intentos de reconexión
+        let isDrawing = false;
+        let isErasing = false; // Indica si la goma está activa
+        let canvas, ctx;
+        let drawings = {}; // Almacena los dibujos de los jugadores
+        let currentWord = null;
+
+        function connectWebSocket() {
+            socket = new WebSocket('wss://your-websocket-server.com'); // Cambiar por la URL de tu servidor WebSocket
+
+            socket.onopen = () => {
+                console.log('Conectado al servidor WebSocket');
+                reconnectAttempts = 0; // Reiniciar intentos de reconexión
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            socket.onclose = () => {
+                console.warn('WebSocket cerrado.');
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    console.log(`Intentando reconectar... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                    setTimeout(connectWebSocket, reconnectInterval); // Intentar reconectar
+                } else {
+                    alert('No se pudo conectar al servidor. Por favor, verifica tu conexión o intenta más tarde.');
+                }
+            };
+
+            socket.onerror = (error) => {
+                console.error('Error en WebSocket:', error);
+            };
+        }
+
+        function handleServerMessage(data) {
+            switch (data.type) {
+                case 'player-joined':
+                    updatePlayerList(data.players);
+                    break;
+                case 'chat-message':
+                    displayChatMessage(data.message, data.sender);
+                    break;
+                case 'start-countdown':
+                    startCountdown(data.countdown);
+                    break;
+                case 'start-drawing':
+                    startDrawing(data.word);
+                    break;
+                case 'end-round':
+                    showEndRoundButtons();
+                    break;
+                case 'new-host':
+                    if (data.newHost === playerName) {
+                        isHost = true;
+                        alert("Eres el nuevo anfitrión.");
+                    }
+                    break;
+                case 'invite-friend':
+                    if (data.friendName === playerName) {
+                        const accept = confirm(`${data.sender} te ha invitado a unirte a la sala ${data.roomCode}. ¿Aceptar?`);
+                        if (accept) {
+                            roomCode = data.roomCode;
+                            document.getElementById('room-code').textContent = `Sala: ${roomCode}`;
+                            document.getElementById('menu').style.display = 'none';
+                            document.getElementById('game-container').style.display = 'block';
+                            document.getElementById('chat-box').style.display = 'flex';
+                            sendMessage({ type: 'join-room', roomCode, playerName });
+                        }
+                    }
+                    break;
+                case 'send-request':
+                    if (data.targetPlayer === playerName) {
+                        const accept = confirm(`${data.sender} te ha enviado una solicitud. ¿Aceptar?`);
+                        if (accept) {
+                            alert("Solicitud aceptada.");
+                            sendMessage({ type: 'request-accepted', sender: data.sender, roomCode });
+                        } else {
+                            alert("Solicitud rechazada.");
+                            sendMessage({ type: 'request-rejected', sender: data.sender, roomCode });
+                        }
+                    }
+                    break;
+                // ...otros casos según sea necesario...
+            }
+        }
+
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('player-list');
+            playerList.innerHTML = '';
+            players.forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = player;
+                playerList.appendChild(li);
+            });
+        }
+
+        function displayChatMessage(message, sender) {
+            const chatMessages = document.getElementById('chat-messages');
+            const newMessage = document.createElement('div');
+            newMessage.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatMessages.appendChild(newMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showEndRoundButtons() {
+            document.getElementById('end-round-buttons').style.display = 'block';
+        }
+
+        function sendMessage(data) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(data));
+            } else {
+                console.error("No se puede enviar el mensaje: WebSocket no está abierto.");
+            }
+        }
+
+        function initializeCanvas() {
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Cambiar el color del pincel dinámicamente
+            document.getElementById('color-picker').addEventListener('input', (event) => {
+                ctx.strokeStyle = event.target.value;
+                isErasing = false; // Desactivar la goma al cambiar de color
+            });
+
+            // Cambiar el tamaño del pincel dinámicamente
+            document.getElementById('brush-size').addEventListener('input', (event) => {
+                ctx.lineWidth = event.target.value;
+            });
+
+            // Activar la goma
+            document.getElementById('eraser-tool').addEventListener('click', () => {
+                isErasing = true;
+                ctx.strokeStyle = 'white'; // La goma dibuja en blanco
+            });
+
+            // Activar el pincel
+            document.getElementById('brush-tool').addEventListener('click', () => {
+                isErasing = false;
+                ctx.strokeStyle = document.getElementById('color-picker').value; // Restaurar el color seleccionado
+            });
+        }
+
+        function startDrawing(event) {
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(event.offsetX, event.offsetY);
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            ctx.lineTo(event.offsetX, event.offsetY);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function startGame() {
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            alert(`Dibuja: ${currentWord}`);
+            initializeCanvas();
+            document.getElementById('drawing-tools').style.display = 'block';
+
+            setTimeout(() => {
+                endDrawingPhase();
+            }, 300000); // 5 minutos
+        }
+
+        function endDrawingPhase() {
+            const drawingData = canvas.toDataURL();
+            sendMessage({ type: 'submit-drawing', drawing: drawingData, playerName, roomCode });
+            document.getElementById('drawing-tools').style.display = 'none';
+            alert('¡Tiempo terminado! Ahora califica los dibujos.');
+        }
+
+        function displayDrawings(drawings) {
+            const container = document.createElement('div');
+            container.id = 'drawings-container';
+            document.body.appendChild(container);
+
+            Object.keys(drawings).forEach(player => {
+                if (player === playerName) return; // No mostrar el dibujo propio para calificar
+
+                const drawingDiv = document.createElement('div');
+                const img = document.createElement('img');
+                img.src = drawings[player];
+                img.style.width = '200px';
+                img.style.height = '200px';
+
+                const voteUp = document.createElement('button');
+                voteUp.textContent = '👍';
+                voteUp.style.backgroundColor = 'green';
+                voteUp.onclick = () => sendMessage({ type: 'vote', player, vote: 'up', roomCode });
+
+                const voteDown = document.createElement('button');
+                voteDown.textContent = '👎';
+                voteDown.style.backgroundColor = 'red';
+                voteDown.onclick = () => sendMessage({ type: 'vote', player, vote: 'down', roomCode });
+
+                drawingDiv.appendChild(img);
+                drawingDiv.appendChild(voteUp);
+                drawingDiv.appendChild(voteDown);
+                container.appendChild(drawingDiv);
+            });
+        }
+
+        document.getElementById('join-game').addEventListener('click', () => {
+            playerName = document.getElementById('player-name').value.trim();
+            const errorMessage = document.getElementById('error-message');
+
+            if (!playerName) {
+                errorMessage.textContent = "Por favor, ingresa un nombre.";
+                return;
+            }
+
+            errorMessage.textContent = "";
+            document.getElementById('player-form').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+        });
+
+        document.getElementById('create-room').addEventListener('click', () => {
+            roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('room-code').textContent = `Sala: ${roomCode}`;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementById('room-menu').style.display = 'block';
+            document.getElementById('chat-box').style.display = 'flex'; // Mostrar el chat al entrar a la sala
+            isHost = true;
+
+            sendMessage({ type: 'create-room', roomCode, playerName });
+        });
+
+        document.getElementById('send-chat').addEventListener('click', () => {
+            const message = document.getElementById('chat-message').value.trim();
+            if (message) {
+                sendMessage({ type: 'chat-message', message, sender: playerName, roomCode });
+                document.getElementById('chat-message').value = '';
+            }
+        });
+
+        document.getElementById('continue-game').addEventListener('click', () => {
+            document.getElementById('end-round-buttons').style.display = 'none';
+            if (isHost) {
+                sendMessage({ type: 'start-next-round', roomCode });
+            }
+        });
+
+        document.getElementById('exit-game').addEventListener('click', () => {
+            sendMessage({ type: 'player-left', playerName, roomCode });
+            window.location.href = "https://www.google.com";
+        });
+
+        document.getElementById('start-game').addEventListener('click', () => {
+            if (isHost) {
+                sendMessage({ type: 'start-game', roomCode });
+                startGame(); // Inicia el juego para el anfitrión
+            } else {
+                alert("Solo el anfitrión puede iniciar el juego.");
+            }
+        });
+
+        document.getElementById('invite-friends').addEventListener('click', () => {
+            const friendName = prompt("Ingresa el nombre del amigo que deseas invitar:");
+            if (friendName) {
+                sendMessage({ type: 'invite-friend', friendName, roomCode });
+                alert(`Invitación enviada a ${friendName}.`);
+            }
+        });
+
+        document.getElementById('send-request').addEventListener('click', () => {
+            const targetPlayer = prompt("Ingresa el nombre del jugador al que deseas enviar la solicitud:");
+            if (targetPlayer) {
+                sendMessage({ type: 'send-request', targetPlayer, roomCode });
+                alert(`Solicitud enviada a ${targetPlayer}.`);
+            }
+        });
+
+        document.getElementById('join-room').addEventListener('click', () => {
+            const code = prompt('Ingresa el código de la sala:');
+            if (code) {
+                roomCode = code;
+                document.getElementById('room-code').textContent = `Sala: ${roomCode}`;
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                document.getElementById('chat-box').style.display = 'flex'; // Mostrar el chat al entrar a la sala
+                sendMessage({ type: 'join-room', roomCode, playerName });
+            }
+        });
+
+        connectWebSocket();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/parse/3.4.4/parse.min.js"></script>
+    <script>
+        // Inicializar Parse
+        Parse.initialize("8S4A1bRFg19ziD6XpXJw08oBjDx7UMZOH68jVj9r", "oYmxpVAbT4232xQ6OaBf18NMPzlD6dYb6eOmfD1X");
+        Parse.serverURL = "https://parseapi.back4app.com";
+
+        // Crear un objeto
+        async function createGameScore(data) {
+            const GameScore = Parse.Object.extend("GameScore");
+            const gameScore = new GameScore();
+
+            try {
+                const result = await gameScore.save(data);
+                console.log("Objeto creado:", result);
+            } catch (error) {
+                console.error("Error al crear el objeto:", error);
+            }
+        }
+
+        // Leer objetos
+        async function readGameScores() {
+            const GameScore = Parse.Object.extend("GameScore");
+            const query = new Parse.Query(GameScore);
+
+            try {
+                const results = await query.find();
+                console.log("Objetos leídos:", results);
+            } catch (error) {
+                console.error("Error al leer los objetos:", error);
+            }
+        }
+
+        // Actualizar un objeto
+        async function updateGameScore(objectId, data) {
+            const GameScore = Parse.Object.extend("GameScore");
+            const query = new Parse.Query(GameScore);
+
+            try {
+                const gameScore = await query.get(objectId);
+                Object.keys(data).forEach((key) => {
+                    gameScore.set(key, data[key]);
+                });
+                const result = await gameScore.save();
+                console.log("Objeto actualizado:", result);
+            } catch (error) {
+                console.error("Error al actualizar el objeto:", error);
+            }
+        }
+
+        // Eliminar un objeto
+        async function deleteGameScore(objectId) {
+            const GameScore = Parse.Object.extend("GameScore");
+            const query = new Parse.Query(GameScore);
+
+            try {
+                const gameScore = await query.get(objectId);
+                await gameScore.destroy();
+                console.log("Objeto eliminado");
+            } catch (error) {
+                console.error("Error al eliminar el objeto:", error);
+            }
+        }
+
+        // Ejemplo de uso
+        document.getElementById("start-game").addEventListener("click", () => {
+            const data = { score: 1337, playerName: "Sean Plott", cheatMode: false };
+            createGameScore(data); // Crear un objeto al iniciar el juego
+        });
+
+        document.getElementById("send-request").addEventListener("click", () => {
+            readGameScores(); // Leer objetos al enviar una solicitud
+        });
+
+        // Puedes agregar más llamadas a estas funciones según sea necesario en tu aplicación
+    </script>
+</body>
+</html>
