@@ -1,0 +1,13 @@
+{
+  "transacciones": [
+    {
+      "id": 1,
+      "tipo": "ingreso",
+      "descripcion": "inicio",
+      "monto": 1054.0,
+      "categoria": "Salario",
+      "fecha": "2025-11-29 11:06:35"
+    }
+  ],
+  "meta_ahorro": 650.0
+}
